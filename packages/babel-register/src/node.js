@@ -36,6 +36,10 @@ let maps          = {};
 
 let cwd = process.cwd();
 
+const splitDirname = __dirname.split("/");
+const isAdmin = splitDirname[splitDirname.length - 4] === "admin";
+const rootDir = splitDirname.slice(0, isAdmin ? -4 : -3).join("/");
+
 function getRelativePath(filename) {
   return path.relative(cwd, filename);
 }
@@ -46,6 +50,11 @@ function mtime(filename) {
 
 function compile(filename) {
   let result;
+
+  const currPlugins = transformOpts.plugins;
+  if (!filename.includes(rootDir)) {
+    delete transformOpts.plugins;
+  }
 
   // merge in base options and resolve all the plugins and presets relative to this file
   let opts = new OptionManager().init(extend(deepClone(transformOpts), {
@@ -80,6 +89,8 @@ function compile(filename) {
   }
 
   maps[filename] = result.map;
+
+  transformOpts.plugins = currPlugins;
 
   return result.code;
 }
